@@ -215,12 +215,13 @@ end case
 | `<< value \| value \| ... >>` | Outputs cells as a HTML header with special styling |
 | `[ value \| value \| ... ]` | Outputs cells as HTML in block format |
 | `< value \| value \| ... \|` (multi-line) | Starts a multi-line surround that continues until a line ending with `>` |
+| `[ value \| value \| ... \|` (multi-line) | Starts a multi-line block surround that continues until a line ending with `]` |
 
 Surround handlers format information for the user as multiple cells. Cell divisions are identified with the pipe character (`|`), and cells themselves should consist of a string value or Resolver that outputs a string or HTML value.
 
 #### Multi-line Surrounds
 
-Multi-line surrounds allow you to create a styled container that spans multiple lines. When a surround line starts with `<` and ends with `|` (instead of `>`), it begins a multi-line surround block. Each subsequent line is treated as a continuation of the surround until a line ending with `>` is encountered.
+Multi-line surrounds allow you to create a styled container that spans multiple lines. When a surround line starts with `<` or `[` and ends with `|` (instead of `>` or `]`), it begins a multi-line surround block. Each subsequent line is treated as a continuation of the surround until a line ending with the corresponding closing character (`>` for `<` surrounds, `]` for `[` surrounds) is encountered.
 
 All rows within a multi-line surround are wrapped in a parent HTML element with the CSS class `incontact-multiline-container`, allowing it to be styled differently from single-line surrounds while maintaining the individual row structure.
 
@@ -231,10 +232,15 @@ All rows within a multi-line surround are wrapped in a parent HTML element with 
     << focus(address) >>
     < 'City:' | focus(city) | 'State:' | focus(state) >
 
-    // Multi-line surround example
+    // Multi-line surround example with < ... >
     < 'Contact Information:' | 'Details' |
     'Phone:' | focus(phone) |
     'Email:' | focus(email) >
+
+    // Multi-line block surround example with [ ... ]
+    [ 'Extended Notes:' |
+    multi_focus(notes) |
+    'Last Updated:' | last_modified ]
 ```
 
 **Multi-line surround in the chore task example:**
@@ -245,10 +251,6 @@ All rows within a multi-line surround are wrapped in a parent HTML element with 
     '<em>Assign To:</em>' | select(household_members, assigned_to) |
     '<em>Status:</em>' | select(statuses, status) >
 ```
-
-The `<< >>` (double angle bracket) surround creates header-styled cells with the CSS class `incontact-header-cell`, which can be styled differently from regular cells for visual emphasis.
-
-Inside cells, HTML can be used for basic styling including `<em>`, `<strong>`, `<h1-h6>`, and others. Memdex also implements a `<space>` tag that adds a 20% screen width space.
 
 ### REMOVE Handler
 
