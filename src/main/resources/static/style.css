@@ -19,6 +19,16 @@ body {font-family: 'Mozilla Text', sans-serif;background-color: #f4efef;color: #
     display: flex;
 }
 
+.incontact-block-cell:has(>em) {
+    min-width: 110px;
+    max-width: 25%;
+}
+
+.incontact-block-row, .incontact-row {
+    border-bottom: 1px dotted #5c54605e;
+    margin-bottom: 1rem;
+}
+
 .home-icon {
     display: flex;
     align-items: center;
@@ -61,7 +71,7 @@ h1 {/* color: #ffffff; *//* margin-inline: 8px; */margin-top: -2rem;margin-botto
     font-size: 1.1em;
 }
 
-.incontact-block-row {display: flex;margin-bottom: 15px;}
+.incontact-block-row {display: flex;margin-bottom: 15px;display: flex;margin-inline: -2rem;margin-bottom: 1rem;border-bottom: 1px dotted #5c54605e;padding-bottom: 1rem;padding-inline: 2rem;align-items: center;gap: 1.5em;}
 .incontact-block-cell {display: flex;/* padding: .5rem 0; */position: relative;flex: 1;max-width: 100%;width: 100%;}
 .incontact-block-cell em {display: inline-block;/* width: 120px; *//* font-weight: bold; */}
 .selectable {padding: 1rem;/* margin-left: 10px; */min-width: 200px;width: -webkit-fill-available;font-family: 'Mozilla Text', sans-serif;border: 0;background-color: #f0f0f0;border-radius: 4px;min-width: 200px;}
@@ -186,4 +196,16 @@ html {
         border-bottom: 1px dotted #5c54605e;
         margin-bottom: 1rem;
     }
+}
+
+/* Space element for flexible spacing in rows */
+.incontact-space {
+    flex: 6;
+    margin-left: auto;
+    margin-right: auto;
+    min-width: -webkit-fill-available;
+}
+.incontact-cell:has(.incontact-space) {
+    margin-left: auto;
+    margin-right: auto;
 }

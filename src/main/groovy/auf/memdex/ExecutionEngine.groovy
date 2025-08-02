@@ -546,6 +546,11 @@ class ExecutionEngine {
         // Unescape escaped single quotes (\')
         value = value.replaceAll("\\\\'", "'")
 
+        // Handle the asterisk (*) as a flexible space element
+        if (value.trim() == '*') {
+            return '<div class="incontact-space"></div>'
+        }
+
         // Handle querystring parameter references (&param_name)
         if (value.startsWith('&')) {
             def paramName = value.substring(1) // Remove the & prefix

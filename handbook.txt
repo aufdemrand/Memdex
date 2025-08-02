@@ -219,6 +219,29 @@ end case
 
 Surround handlers format information for the user as multiple cells. Cell divisions are identified with the pipe character (`|`), and cells themselves should consist of a string value or Resolver that outputs a string or HTML value.
 
+#### Space Element for Layout Control
+
+The asterisk character (`*`) can be used as a special space element within surround handlers to create flexible spacing that pushes subsequent elements to the right edge of the container. This is particularly useful for layout purposes where you want to separate elements for better user experience.
+
+**Syntax:** `*`
+
+The space element creates a flexible spacer that expands to fill available space, effectively pushing any elements that follow it to the right side of the row. This is especially valuable for positioning action buttons (like delete buttons) away from other interactive elements to prevent accidental clicks.
+
+**Example:**
+```
+@task : Task (Household)
+#render:
+    < focus(task_name) | focus(status) | * | button('Delete', #remove_task) >
+```
+
+In this example, the delete button will be pushed to the far right of the row, separated from the editable fields, reducing the likelihood of accidental deletion when users are trying to interact with the task name or status fields.
+
+**Common Use Cases:**
+- Separating action buttons from content fields
+- Creating visual separation between primary and secondary actions
+- Improving interface layout by distributing elements across the full width
+- Enhancing user safety by positioning destructive actions away from frequently-used controls
+
 #### Multi-line Surrounds
 
 Multi-line surrounds allow you to create a styled container that spans multiple lines. When a surround line starts with `<` or `[` and ends with `|` (instead of `>` or `]`), it begins a multi-line surround block. Each subsequent line is treated as a continuation of the surround until a line ending with the corresponding closing character (`>` for `<` surrounds, `]` for `[` surrounds) is encountered.
