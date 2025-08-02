@@ -219,6 +219,30 @@ end case
 
 Surround handlers format information for the user as multiple cells. Cell divisions are identified with the pipe character (`|`), and cells themselves should consist of a string value or Resolver that outputs a string or HTML value.
 
+#### Bold Text Formatting with ! Suffix
+
+Any cell value that ends with an exclamation mark (`!`) will be automatically wrapped in `<strong>` tags for bold formatting. This works with both literal string values and variable names.
+
+**Syntax:** `value!`
+
+**Examples:**
+```
+@chore_task : Chore Task (Household)
+#preview:
+    < assigned_to! | 'is assigned to:' | task_name! >
+    < 'Important Note'! | 'This task is high priority.' >
+```
+
+In this example:
+- `assigned_to!` - The value of the `assigned_to` variable will be displayed in bold
+- `task_name!` - The value of the `task_name` variable will be displayed in bold  
+- `'Important Note'!` - The literal string "Important Note" will be displayed in bold
+
+The `!` suffix can be applied to:
+- Variable names: `assigned_to!`, `task_name!`
+- Literal strings: `'Important Note'!`, `'HIGH PRIORITY'!`
+- Resolver functions: `focus(name)!`, `select(options, choice)!`
+
 #### Space Element for Layout Control
 
 The asterisk character (`*`) can be used as a special space element within surround handlers to create flexible spacing that pushes subsequent elements to the right edge of the container. This is particularly useful for layout purposes where you want to separate elements for better user experience.
@@ -306,8 +330,25 @@ Resolvers are used in conjunction with handlers. They take arguments and output 
 - `button('label',#function)`
 - `button('label','url:value')`
 - `button('label',@module_type#function)`
+- `button(emoji,#function)` - Emoji buttons without quotes
+- `button(emoji,'url:value')` - Emoji buttons without quotes
+- `button(emoji,@module_type#function)` - Emoji buttons without quotes
 
 Makes a button with a label that renders a function, a url, or a function from another module when pressed. When specifying a url, you must have a `url:` prefix.
+
+**Emoji Button Feature:**
+When using an emoji without quotes (e.g., `button(🗑, #delete)`), the button will automatically receive an additional CSS class `emoji-btn`, allowing it to be styled differently from regular text buttons. This creates smaller, more concise buttons that use emojis to convey their purpose.
+
+**Examples:**
+```
+// Regular text button
+< button('Delete Task', #delete) >
+
+// Emoji button (gets emoji-btn CSS class)
+< button(🗑, #delete) >
+< button(✍, #edit) >
+< button(🏠, #home) >
+```
 
 **Return Type:** HTML
 
@@ -326,8 +367,23 @@ Similar to a button, except a popup renders the function when pressed instead of
 **Syntax:**
 - `back_button('label')`
 - `back_button('label',number)`
+- `back_button(emoji)` - Emoji buttons without quotes  
+- `back_button(emoji,number)` - Emoji buttons without quotes
 
 Tells the interface to use its history to back up. Specifying just a label will back up 1 page, but you can alternatively insert an integer number to back up more than a single page.
+
+**Emoji Button Feature:**
+When using an emoji without quotes, the button will automatically receive an additional CSS class `emoji-btn` for styling purposes.
+
+**Examples:**
+```
+// Regular text button
+< back_button('Go Back') >
+
+// Emoji button (gets emoji-btn CSS class)
+< back_button(⬅️) >
+< back_button(✍, 2) >
+```
 
 **Return Type:** HTML
 
@@ -337,8 +393,24 @@ Tells the interface to use its history to back up. Specifying just a label will 
 - `construction_button('label',#function)`
 - `construction_button('label',#function,mod_type)`
 - `construction_button('label',#function,mod_type,storage_array_var)`
+- `construction_button(emoji,#function)` - Emoji buttons without quotes
+- `construction_button(emoji,#function,mod_type)` - Emoji buttons without quotes
+- `construction_button(emoji,#function,mod_type,storage_array_var)` - Emoji buttons without quotes
 
 Just like a button, but before rendering the specified function, a new record instance is created. This essentially constructs a new instance, triggers the `#construct` function, and then the specified function. The uuid of the new record is passed along as a querystring, so it can be referenced by `&uuid`.
+
+**Emoji Button Feature:**
+When using an emoji without quotes, the button will automatically receive an additional CSS class `emoji-btn` for styling purposes.
+
+**Examples:**
+```
+// Regular text button
+< construction_button('Add New Task', #setup) >
+
+// Emoji button (gets emoji-btn CSS class)
+< construction_button(➕, #setup) >
+< construction_button(📝, #setup, task_type) >
+```
 
 **Return Type:** HTML
 

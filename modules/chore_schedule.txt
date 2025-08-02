@@ -1,9 +1,9 @@
 // The main schedule module. This will act as our homepage and control panel.
 @chore_schedule : Chore Schedule (Household)
 
-// This array will hold the unique IDs (uuids) of every chore task we create. [cite: 52, 56]
+// This array will hold the unique IDs (uuids) of every chore task we create.
 // It should be created on the single instance of this module.
-
+var tasks[]
 
 // The #home function will be the main view for the chore chart. [cite: 34]
 // It provides a button to assign new tasks and then lists all existing tasks.

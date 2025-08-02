@@ -539,6 +539,13 @@ class ExecutionEngine {
     }
 
     private Object resolveValue(String value, Map module, Map recordVars, Map context, Map tmpVars) {
+        // Check if value ends with ! for strong formatting
+        boolean shouldBold = false
+        if (value.endsWith('!')) {
+            shouldBold = true
+            value = value.substring(0, value.length() - 1) // Remove the !
+        }
+
         // Unwrap quoted string if present
         if (value.startsWith("'") && value.endsWith("'")) {
             value = value.substring(1, value.length() - 1)
@@ -548,16 +555,18 @@ class ExecutionEngine {
 
         // Handle the asterisk (*) as a flexible space element
         if (value.trim() == '*') {
-            return '<div class="incontact-space"></div>'
+            def result = '<div class="incontact-space"></div>'
+            return shouldBold ? "<strong>${result}</strong>" : result
         }
 
         // Handle querystring parameter references (&param_name)
         if (value.startsWith('&')) {
             def paramName = value.substring(1) // Remove the & prefix
+            def result = ''
             if (context.querystring && context.querystring.containsKey(paramName)) {
-                return context.querystring[paramName]
+                result = context.querystring[paramName]
             }
-            return '' // Return empty string if parameter not found
+            return shouldBold ? "<strong>${result}</strong>" : result
         }
 
         // Check temporary variables first
@@ -567,7 +576,8 @@ class ExecutionEngine {
             if (tmpValue instanceof List) {
                 return tmpValue
             }
-            return tmpValue
+            def result = tmpValue
+            return shouldBold ? "<strong>${result?.toString() ?: ''}</strong>" : result
         }
 
         // focus(var_name) resolver
@@ -576,19 +586,27 @@ class ExecutionEngine {
             def varName = focusMatcher[0][1]
             def varValue = recordVars[varName] ?: ''
             // Add data attributes for our JavaScript to use
-            return "<span class=\"focusable\" data-varname=\"${varName}\" data-uuid=\"${context.record?.uuid}\">${varValue}</span>"
+            def result = "<span class=\"focusable\" data-varname=\"${varName}\" data-uuid=\"${context.record?.uuid}\">${varValue}</span>"
+            return shouldBold ? "<strong>${result}</strong>" : result
         }
 
-        // button('label', #function) resolver
-        def buttonMatcher = (value =~ /button\('(.+?)',\s*([\w_]+)?#(\w+)\)/)
+        // button('label', #function) or button(emoji, #function) resolver
+        def buttonMatcher = (value =~ /button\(([^,]+),\s*([\w_]+)?#(\w+)\)/)
         if (buttonMatcher.find()) {
-            def label = buttonMatcher[0][1]
+            def labelOrEmoji = buttonMatcher[0][1].trim()
             def targetModule = buttonMatcher[0][2] ?: module.type
             def function = buttonMatcher[0][3]
+
+            // Check if it's an emoji (no quotes) or a quoted string
+            def isEmoji = !labelOrEmoji.startsWith("'") && !labelOrEmoji.startsWith('"')
+            def displayText = isEmoji ? labelOrEmoji : labelOrEmoji.substring(1, labelOrEmoji.length() - 1)
+            def cssClass = isEmoji ? "button emoji-btn" : "button"
+
             // Use singleton uuid if present, else try to get uuid from context
             def uuid = (targetModule == module.type) ? context.record?.uuid : targetModule
             def url = "/module/${targetModule}/${function}?uuid=${uuid}"
-            return "<a href=\"${url}\" class=\"button\">${label}</a>"
+            def result = "<a href=\"${url}\" class=\"${cssClass}\">${displayText}</a>"
+            return shouldBold ? "<strong>${result}</strong>" : result
         }
 
         // select(array_var, var_name) resolver
@@ -619,26 +637,38 @@ class ExecutionEngine {
                 selectHtml += "<option value=\"${opt}\" ${sel}>${opt}</option>"
             }
             selectHtml += "</select>"
-            return selectHtml
+            return shouldBold ? "<strong>${selectHtml}</strong>" : selectHtml
         }
 
-        // back_button('label', [number]) resolver
-        def backButtonMatcher = (value =~ /back_button\('(.+?)'(?:,\s*(\d+))?\)/)
+        // back_button('label', [number]) or back_button(emoji, [number]) resolver
+        def backButtonMatcher = (value =~ /back_button\(([^,)]+)(?:,\s*(\d+))?\)/)
         if (backButtonMatcher.find()) {
-            def label = backButtonMatcher[0][1]
+            def labelOrEmoji = backButtonMatcher[0][1].trim()
             def number = backButtonMatcher[0][2] ?: '1'
+
+            // Check if it's an emoji (no quotes) or a quoted string
+            def isEmoji = !labelOrEmoji.startsWith("'") && !labelOrEmoji.startsWith('"')
+            def displayText = isEmoji ? labelOrEmoji : labelOrEmoji.substring(1, labelOrEmoji.length() - 1)
+            def cssClass = isEmoji ? "back-button emoji-btn" : "back-button"
+
             // Render a button with a data attribute for JS to handle history.back
-            return "<button class=\"back-button\" data-back=\"${number}\">${label}</button>"
+            def result = "<button class=\"${cssClass}\" data-back=\"${number}\">${displayText}</button>"
+            return shouldBold ? "<strong>${result}</strong>" : result
         }
 
-        // construction_button('label', #function, [mod_type], [storage_array_var]) resolver
-        def constructionButtonMatcher = (value =~ /construction_button\('(.+?)',\s*(#\w+)(?:,\s*(\w+))?(?:,\s*(add:)?(\w+))?\)/)
+        // construction_button('label', #function, [mod_type], [storage_array_var]) or construction_button(emoji, #function, [mod_type], [storage_array_var]) resolver
+        def constructionButtonMatcher = (value =~ /construction_button\(([^,]+),\s*(#\w+)(?:,\s*(\w+))?(?:,\s*(add:)?(\w+))?\)/)
         if (constructionButtonMatcher.find()) {
-            def label = constructionButtonMatcher[0][1]
+            def labelOrEmoji = constructionButtonMatcher[0][1].trim()
             def function = constructionButtonMatcher[0][2]
             def modType = constructionButtonMatcher[0][3] ?: module.type
             def addPrefix = constructionButtonMatcher[0][4] // "add:" prefix if present
             def storageArray = constructionButtonMatcher[0][5] // array variable to store UUID
+
+            // Check if it's an emoji (no quotes) or a quoted string
+            def isEmoji = !labelOrEmoji.startsWith("'") && !labelOrEmoji.startsWith('"')
+            def displayText = isEmoji ? labelOrEmoji : labelOrEmoji.substring(1, labelOrEmoji.length() - 1)
+            def cssClass = isEmoji ? "construction-button emoji-btn" : "construction-button"
 
             // Build URL with construction parameters
             def url = "/construct/${modType}/${function.substring(1)}"
@@ -646,7 +676,8 @@ class ExecutionEngine {
                 url += "?parent_uuid=${context.record.uuid}&storage_var=${storageArray}"
             }
 
-            return "<a href=\"${url}\" class=\"construction-button\">${label}</a>"
+            def result = "<a href=\"${url}\" class=\"${cssClass}\">${displayText}</a>"
+            return shouldBold ? "<strong>${result}</strong>" : result
         }
 
         // match(source_array,field_name,'pattern') resolver
@@ -700,26 +731,6 @@ class ExecutionEngine {
             return sortedArray
         }
 
-        // Plain string literal
-        if (value.startsWith("'") && value.endsWith("'")) {
-            return value.substring(1, value.length() - 1)
-        }
-
-        // A variable from the record
-        if (recordVars.containsKey(value)) {
-            def recordValue = recordVars[value]
-            // If it's a List, return it as-is for assignment operations
-            if (recordValue instanceof List) {
-                return recordValue
-            }
-            return recordValue
-        }
-
-        // A variable from the module
-        if (module.vars.containsKey(value)) {
-            return module.vars[value]
-        }
-
         // find_records_by_type(module_type) resolver
         def findRecordsByTypeMatcher = (value =~ /find_records_by_type\((\w+)\)/)
         if (findRecordsByTypeMatcher.find()) {
@@ -744,6 +755,25 @@ class ExecutionEngine {
             return uuids
         }
 
-        return value // Return as is if no resolver matches
+        // A variable from the record
+        if (recordVars.containsKey(value)) {
+            def recordValue = recordVars[value]
+            // If it's a List, return it as-is for assignment operations
+            if (recordValue instanceof List) {
+                return recordValue
+            }
+            def result = recordValue
+            return shouldBold ? "<strong>${result?.toString() ?: ''}</strong>" : result
+        }
+
+        // A variable from the module
+        if (module.vars.containsKey(value)) {
+            def result = module.vars[value]
+            return shouldBold ? "<strong>${result?.toString() ?: ''}</strong>" : result
+        }
+
+        // Default case - return value as-is
+        def result = value
+        return shouldBold ? "<strong>${result?.toString() ?: ''}</strong>" : result
     }
 }

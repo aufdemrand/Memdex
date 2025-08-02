@@ -30,21 +30,18 @@ var chores_list[] = 'Take out the trash|Empty the dishwasher|Feed the pets|Clean
 // #preview is a summary view of the task, used in the main list on the #home page. [cite: 31, 32]
 #preview:
 	// This surround block shows who the task is assigned to and what the task is. [cite: 80, 84]
-	<  assigned_to | 'is assigned to:' | task_name >
+	<  assigned_to! | 'is assigned to:' | task_name! >
 
 	// The CASE handler checks the value of the 'status' variable. [cite: 78]
 	case status 'Pending'
 		// If the status is 'Pending', a button to complete the task is shown.
-		< button('Mark as Complete', #mark_complete) >
+		< button('Mark as Complete', #mark_complete) | * | button('Edit Task', #edit) >
 	end case
 
 	case status 'Complete'
 		// If the status is 'Complete', a status message is shown instead.
-		< '<strong>Status:</strong> Complete' >
+		< '<em>Status:</em> Complete' | * | button('Edit Task', #edit) >
 	end case
-
-	// Add edit button to preview
-	< button('Edit Task', #edit) >
 
 #edit:
     var statuses[] = 'Pending|Complete'
@@ -55,7 +52,7 @@ var chores_list[] = 'Take out the trash|Empty the dishwasher|Feed the pets|Clean
 	  '<em>Status:</em>' | select(statuses, status) ]
 	[ '<em>Completion Notes:</em>' |
 	  multi_focus(completion_notes) ]
-	< back_button('Done') | * | button('Delete Task', #delete) >
+	< back_button(✍) | * | button(🗑, #delete) >
 
 #delete:
 	remove &uuid
