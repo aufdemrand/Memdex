@@ -1,0 +1,33 @@
+// modules/cleaning_overview.txt
+@cleaning_overview : Cleaning Overview (Maintenance)
+
+var all_cleanings[]
+
+#construct:
+ tmp all_tasks[] = find_records_by_type(printer_cleaning)
+ all_cleanings = all_tasks
+
+#home:
+ < '<h2>Daily Printer Cleaning Overview</h2>' >
+ < construction_button('Record New Cleaning Task', #setup, printer_cleaning, all_cleanings) >
+
+ < '<h3>Recent Cleaning Tasks</h3>' >
+ tmp sorted_tasks[] = sort(all_cleanings,creation_date,DESCENDING)
+ foreach sorted_tasks#preview
+
+ < '<h3>Summary by Printer</h3>' >
+ < button('HP Latex 105 History', #hp_history) | button('Roland XF640 History', #roland_history) >
+
+#hp_history:
+ < '<h2>HP Latex 105 Cleaning History</h2>' >
+ tmp hp_tasks[] = match(all_cleanings,printer,'HP Latex 105')
+ tmp sorted_hp[] = sort(hp_tasks,creation_date,DESCENDING)
+ foreach sorted_hp#preview
+ < back_button('Return to Overview') >
+
+#roland_history:
+ < '<h2>Roland XF640 Cleaning History</h2>' >
+ tmp roland_tasks[] = match(all_cleanings,printer,'Roland XF640')
+ tmp sorted_roland[] = sort(roland_tasks,creation_date,DESCENDING)
+ foreach sorted_roland#preview
+ < back_button('Return to Overview') >

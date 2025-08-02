@@ -1,0 +1,76 @@
+// This module defines an individual chore task.
+@chore_task : Chore Task (Household)
+
+// Module-level variables that act as constants for dropdown menus. [cite: 49, 50]
+var household_members[] = 'Alex|Ollie|Jeremy (Dad)|Sabrina (Mom)'
+var chores_list[] = 'Take out the trash|Empty the dishwasher|Feed the pets|Clean your room|Mow the lawn|Water the plants'
+
+// #construct is called automatically when a new task is created. [cite: 22]
+// We use it to set the default status for the new chore. [cite: 24]
+#construct:
+	var task_name = '–'
+	var assigned_to = '–'
+	var status = 'Pending'
+	var completion_notes = ''
+
+// #setup provides the interface for assigning the new chore. [cite: 26, 27]
+#setup:
+	< '<h3>Assign a New Chore</h3>' >
+	< '<h4>Select a chore and assign it to a household member.</h4>' >
+
+	// The select() resolver creates a dropdown menu. The user's choice
+	// is stored in the corresponding record variable.
+	< '<em>Chore:</em>' >
+	< select(chores_list, task_name) >
+	< '<em>Assign To:</em>' >
+	< select(household_members, assigned_to) >
+
+	< back_button('Done') >
+
+// #preview is a summary view of the task, used in the main list on the #home page. [cite: 31, 32]
+#preview:
+	// This surround block shows who the task is assigned to and what the task is. [cite: 80, 84]
+	<  assigned_to | 'is assigned to:' | task_name >
+
+	// The CASE handler checks the value of the 'status' variable. [cite: 78]
+	case status 'Pending'
+		// If the status is 'Pending', a button to complete the task is shown.
+		< button('Mark as Complete', #mark_complete) >
+	end case
+
+	case status 'Complete'
+		// If the status is 'Complete', a status message is shown instead.
+		< '<strong>Status:</strong> Complete' >
+	end case
+
+	// Add edit button to preview
+	< button('Edit Task', #edit) >
+
+#edit:
+    var statuses[] = 'Pending|Complete'
+
+	< '<h3>Edit Chore Task</h3>' >
+	< '<em>Chore:</em>' |
+	  select(chores_list, task_name) >
+	< '<em>Assign To:</em>' >
+	< select(household_members, assigned_to) >
+	< '<em>Status:</em>' >
+	< select(statuses, status) >
+	[ '<em>Completion Notes:</em>' |
+	  multi_focus(completion_notes) ]
+	< button('Delete Task', #delete) >
+	< back_button('Done') >
+
+#delete:
+	remove &uuid
+	< '<h3>Task deleted.</h3>' >
+	< button('Back to Chore Schedule', chore_schedule#home) >
+
+// This function is called when the 'Mark as Complete' button is pressed.
+#mark_complete:
+	// We immediately update the record's 'status' variable in the database. [cite: 52]
+	var status = 'Complete'
+
+	< '<h3>Task Complete!</h3>' >
+	[ '<em>Notes:</em>' | multi_focus(completion_notes) ]
+	< button('Back to Chore Schedule', chore_schedule#home) >

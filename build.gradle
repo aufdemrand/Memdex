@@ -1,0 +1,25 @@
+plugins {
+    id 'groovy'
+    id 'application'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Core Groovy dependency
+    implementation 'org.apache.groovy:groovy:4.0.15'
+    implementation 'org.apache.groovy:groovy-json:4.0.15'
+
+    // Jetty server dependencies
+    implementation 'org.eclipse.jetty:jetty-server:11.0.15'
+    implementation 'org.eclipse.jetty:jetty-servlet:11.0.15'
+
+    // SLF4J for logging (Jetty needs this)
+    implementation 'org.slf4j:slf4j-simple:2.0.7'
+}
+
+application {
+    mainClass = 'auf.memdex.Main'
+}

@@ -1,0 +1,31 @@
+// modules/printer_cleaning.txt
+@printer_cleaning : Printer Cleaning (Maintenance)
+
+var printers[] = 'HP Latex 105|Roland XF640'
+var results[] = 'Complete - Normal|Complete - Issues Found|Incomplete - Equipment Problem|Incomplete - Supply Issue'
+
+#construct:
+ technician = '...'
+ printer = 'HP Latex 105'
+ result = 'Complete - Normal'
+ findings = '...'
+
+#setup:
+ < '<h3>New daily printer cleaning task</h3>' >
+ < '<em>Technician:</em>' | focus(technician) >
+ < '<space>' >
+ < '<em>Printer:</em>' | select(printers,printer) >
+ < '<space>' >
+ < '<em>Result:</em>' | select(results,result) >
+ [ '<em>Findings/Notes:</em>' | multi_focus(findings) ]
+ < back_button('Save & Return') | button('View Task',#render) >
+
+#render:
+ << 'Daily cleaning -' | select(printers,printer) >>
+ < '<em>Technician:</em>' | focus(technician) | '<space>' | '<em>Date:</em>' | creation_date >
+ < '<em>Result:</em>' | select(results,result) >
+ [ '<em>Findings/Notes:</em>' | multi_focus(findings) ]
+
+#preview:
+ < creation_date | '-' | select(printers,printer) | '-' | focus(technician) >
+ < '<em>Result:</em>' | select(results,result) >

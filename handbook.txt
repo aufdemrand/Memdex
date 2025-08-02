@@ -1,0 +1,379 @@
+# MEMDEX REFERENCE HANDBOOK
+
+Memdex is a custom CMS system that offers a web-based front-end with a programmable back-end to perfectly describe your operations. It was created by Jeremy Schroeder and can be purchased for $100.00 by e-mailing him.
+
+## MODULES
+
+Modules are the coolest part of Memdex. They describe how to use the data in and out of the system. Modules consist of functions which can be 'called' or 'rendered' to produce action or result in display to the end user.
+
+A typical module consists of an identifier, and many different functions that instruct the system on how to handle data associated with the module.
+
+### Describing a Module Type
+
+```
+@module_type : Module Name (Module Group)
+```
+
+- **module_type**: Should be a single word, lowercase, no spaces. Use underscores to separate multi-word module types.
+- **Module Name**: What the user will see when inquiring about an instance of the module type. Can contain multiple words, typically sentence case.
+- **Module Group**: The broader type of module that is being described.
+
+### Function Types
+
+Functions are typically used in two different fashions:
+
+1. **Singleton**: No instances of the module will be created or maintained in the database. The functions provided are merely 'pages' or 'interfaces' to deal with information, probably via an HTML querystring.
+
+2. **Object**: To define the types of records contained in the central database, modules and functions must be written to handle data display, interaction, and setup. Through the use of pages, it is easy to establish, view, and maintain data of a specific record.
+
+Modules can, and mostly will, contain both types of functions, and both are used abstractly. There is no indication of whether a function is using the singleton approach or as an instanced object approach. Only the logic laid out by the scripting will dictate the difference.
+
+### Core Functions
+
+Memdex has several basic functions that modules can use to handle internal functionality:
+
+1. **`#construct`**: Automatically called when a new instance is made of a module type. The information of the constructed instance is stored in the central database. This function provides no feedback to a user, but is typically used to set default 'vars' for the object being constructed.
+
+2. **`#setup`**: A general function that can be used to provide a simple 'walkthrough' to aid in the creation of a new record of the module type specified. It typically consists of focusables, buttons, and other HTML output to collect the most important information about the record.
+
+3. **`#render`**: Regarded as the central viewpoint of a module record. This function is usually called on a record that is already established. Though not all the information stored inside a record should necessarily be available to this view, there should typically be some way to access all information through the use of this function through buttons/custom functions.
+
+4. **`#preview`**: A short preview of the record as a whole. This should be 2-3 lines long, and is called upon record removal, search results, and other various Memdex features.
+
+5. **`#home`**: Should be used as a static viewport for all records associated with this module type. Users of your Memdex database are able to attach modules which implement this function to their personal home page. Generally an overview of the records, or button to create a new record are provided in this view.
+
+### Example Module
+
+Here's a complete example module for tracking maintenance on a wide format printer:
+
+```
+@printer_maintenance : Printer Maintenance (Maintenance)
+
+var printers[] = 'Roland|HP (Fred)|HP (Sandy)|HP Latex|HP Z6100'
+var types[] = 'Daily|Weekly|Monthly|As Needed|Repair'
+var outcomes[] = 'Normal|Requires Followup|In Progress|Fixed'
+
+#construct:
+    printer_name = '–'
+    type = 'Daily'
+    outcome = 'Normal'
+    action = '–'
+    notes = '–'
+
+#setup:
+    < '<h3>New maintenance log entry created.</h3>' >
+    < '<h3>Which printer was maintenanced?</h3>' >
+    < select(printers,printer_name) >
+    < '<space>' >
+    < '<h3>What type of maintenance was performed?</h3>' >
+    < select(types,type) >
+    < '<space>' >
+    < '<h3>What is the current status of the maintenance performed, and what action was taken?' >
+    < '<em>Outcome:</em>' | select(outcomes,outcome) >
+    [ '<em>Action taken:</em>' | multi_focus(action) ]
+    < back_button('Okay, done') | button('View record',#render) >
+
+#render:
+    << select(types,type) | 'maintenance on' | select(printers,printer_name) >>
+    < '<em>Collected by:</em>' | creator | '<space>' | '<em>Performed on:</em>' | creation_date >
+    < '<em>Outcome:</em>' | select(outcomes,outcome) >
+    [ '<em>Action taken:</em>' | multi_focus(action) ]
+    [ '<em>Add\'l notes:</em>' | multi_focus(notes) ]
+
+#preview:
+    < type | 'maintenance on' | printer_name >
+    < 'Performed on:</em>' | creation_date > | '<space>' | '<em>Outcome:</em>' | select(outcomes,outcome) >
+
+#home:
+    < construction_button('Record new maintenance',#setup) >
+    < '<h4>Recent maintenance:</h4>' >
+    tmp all_records[] = find_records_by_type(printer_maintenance)
+    tmp sorted_records[] = sort(all_records,creation_date,DESCENDING)
+    foreach sorted_records#preview
+```
+
+## HANDLERS
+
+Handlers are like 'commands' that interpret values and arguments given. Below are the basic handlers provided to use in functions in conjunction with resolvers.
+
+### VAR/TMP Handler
+
+The 'var/tmp' handler associates data with either a module or specific record, depending on the scope used:
+
+#### Module Variables
+Module Vars are considered 'final' - their values will not change. When used in this fashion, the vars are usually some kind of constant such as an array of selection types.
+
+```
+@customer : Customer (Main)
+var customer_types[] = 'Good|Bad|Awful'
+```
+
+#### Record Variables
+Record Vars are stored inside the central database, associated with a uuid of a record instance. These variables can be changed at any time, allowing modification of the central database with a simple var call.
+
+```
+@customer : Customer (Main)
+#render:
+    var name = 'Choose a company name'
+    var email = 'john@doe.com'
+```
+
+#### Temporary Variables
+Temporary vars are used only within the scope of a single Function. They work almost exactly like Record Vars, except they are not stored within the Central Database.
+
+```
+@customer : Customer (Main)
+#show_active:
+    tmp matches[] = match_all(type,'active')
+    foreach matches#preview
+```
+
+#### Array Variables
+Arrays have multiple pieces of information tied to a single variable. To deal with the values inside, use a Resolver.
+
+1. When explicitly defining an array var, use `|` characters to separate the values:
+   ```
+   @printers : Printers (Equipment)
+   var ink_colors[] = 'cyan|yellow|magenta|black|white'
+   ```
+
+2. Variables and Array Variables can be defined empty as placeholders:
+   ```
+   @note : Note (Note)
+   #construct:
+       var subject = 'Type a subject.'
+       var notes
+       var people[]
+   ```
+
+### Syntax Reference
+
+| Syntax | Description |
+|--------|-------------|
+| `var var_name` | Define empty var |
+| `var array_var[]` | Define empty array var |
+| `var var_name = value` | Sets a var to a specific value |
+| `var array_var[] = 'val\|val2'` | Sets an arrayed var with values |
+| `var var_name[] -> value` | Add a specific string to an array var |
+| `var var_name[] <- value` | Remove a specific string from an array var |
+
+**Values can be given as:**
+- `&querystring` - any valid querystring that has been passed along
+- `var_name` - any module, record, or temporary variable
+- `'string value'` - any literal value
+- `#function_name` - the outcome of a function
+
+### FOREACH Handler
+
+```
+foreach array_var#function
+```
+
+Runs a function for each uuid var inside an array. Foreach requires the array_var to contain uuids of other records. It will iterate through the values and output the function specified for each. Values that are not uuids will be ignored.
+
+**Example:**
+```
+@person : Person (Person)
+#check_tasks:
+    foreach tasks#preview
+```
+
+### DO Handler
+
+```
+do value#function
+```
+
+Runs a function for the specified uuid value. Do takes a single uuid and renders the specified function.
+
+### CASE/ENDCASE Handler
+
+```
+case value match_value
+    ...
+case value match_value
+    ...
+end case
+```
+
+The case handler allows you to conditionally render blocks of logic based on the value of a variable. Each case statement specifies a variable and a match_value (interpreted as a regular expression). Only the first case block whose match_value matches the current value of the variable will be rendered.
+
+**Example:**
+```
+case status 'Pending'
+    < button('Mark as Complete', #mark_complete) >
+case status 'Complete'
+    < '<strong>Status:</strong> Complete' >
+end case
+```
+
+### SURROUND Handlers
+
+| Syntax | Description |
+|--------|-------------|
+| `< value \| value \| ... >` | Outputs cells as HTML |
+| `<< value \| value \| ... >>` | Outputs cells as a HTML header with special styling |
+| `[ value \| value \| ... ]` | Outputs cells as HTML in block format |
+
+Surround handlers format information for the user as multiple cells. Cell divisions are identified with the pipe character (`|`), and cells themselves should consist of a string value or Resolver that outputs a string or HTML value.
+
+**Examples:**
+```
+@address : Address (Address)
+#render:
+    << focus(address) >>
+    < 'City:' | focus(city) | 'State:' | focus(state) >
+```
+
+The `<< >>` (double angle bracket) surround creates header-styled cells with the CSS class `incontact-header-cell`, which can be styled differently from regular cells for visual emphasis.
+
+Inside cells, HTML can be used for basic styling including `<em>`, `<strong>`, `<h1-h6>`, and others. Memdex also implements a `<space>` tag that adds a 20% screen width space.
+
+### REMOVE Handler
+
+```
+remove value
+```
+
+Removes the specified uuid value from the central database. The remove handler will set the record specified by its uuid for removal. Records put in removal are set aside until an administrator trashes them for good.
+
+**Note:** The remove value needs to be a uuid.
+
+## RESOLVERS
+
+Resolvers are used in conjunction with handlers. They take arguments and output HTML/information, depending on the specified resolver.
+
+### Argument Types
+
+| Type | Description |
+|------|-------------|
+| `'string'` | literal string value |
+| `'url:www.google.com'` | url value |
+| `%id` | querystring value |
+| `var_name` | var value (tmp/global/record) |
+| `@id` | field/element value |
+| `#funct` | function value |
+
+### BUTTON Resolver
+
+**Syntax:**
+- `button('label',#function)`
+- `button('label','url:value')`
+- `button('label',@module_type#function)`
+
+Makes a button with a label that renders a function, a url, or a function from another module when pressed. When specifying a url, you must have a `url:` prefix.
+
+**Return Type:** HTML
+
+### ALERT Resolver
+
+**Syntax:**
+- `alert('label',#function)`
+- `alert('label','url:value')`
+
+Similar to a button, except a popup renders the function when pressed instead of a straight-up page change. When the popup is closed, the calling page is refreshed.
+
+**Return Type:** HTML
+
+### BACK_BUTTON Resolver
+
+**Syntax:**
+- `back_button('label')`
+- `back_button('label',number)`
+
+Tells the interface to use its history to back up. Specifying just a label will back up 1 page, but you can alternatively insert an integer number to back up more than a single page.
+
+**Return Type:** HTML
+
+### CONSTRUCTION_BUTTON/CONSTRUCTION_ALERT Resolver
+
+**Syntax:**
+- `construction_button('label',#function)`
+- `construction_button('label',#function,mod_type)`
+- `construction_button('label',#function,mod_type,storage_array_var)`
+
+Just like a button, but before rendering the specified function, a new record instance is created. This essentially constructs a new instance, triggers the `#construct` function, and then the specified function. The uuid of the new record is passed along as a querystring, so it can be referenced by `&uuid`.
+
+**Return Type:** HTML
+
+### FOCUS/MULTI_FOCUS Resolver
+
+**Syntax:**
+- `focus(var)`
+- `multi_focus(var)`
+- `focus(var,'pattern')`
+
+Inserts the value of the var, but allows the user to click on it to gain focus. When focused, the value can be edited, and when unfocused the server will update the record with the new value.
+
+Multi Focuses allow multi-line editing of the values. These typically should be used with block surrounds.
+
+The pattern version checks the value submitted against a regex pattern to limit the input as you see fit.
+
+**Return Type:** HTML
+
+### SORT Resolver
+
+**Syntax:**
+```
+sort(source_array,key_var,direction)
+```
+
+Returns a sorted arrayed var of uuids from a specified source array_var. A 'var' must also be specified as the sort data, along with a direction, either `ASCENDING` or `DESCENDING`.
+
+**Example:**
+```
+tmp sorted[] = sort(correspondences,creation_date,DESCENDING)
+```
+
+**Return Type:** UUID ARRAY
+
+### MATCH Resolver
+
+**Syntax:**
+```
+match(array_var,var,'pattern')
+```
+
+Returns a list of all the records in which the specified var matches the given regex pattern.
+
+**Return Type:** UUID ARRAY
+
+### FETCH Resolver
+
+**Syntax:**
+```
+fetch(source_array,key_var)
+```
+
+Returns a list of all the values of the specified var from the array_var indicated.
+
+**Return Type:** LITERAL ARRAY
+
+### LINK Resolver
+
+**Syntax:**
+```
+link(array_var,var,#function)
+```
+
+Returns a list of all the values of the specified var from the array_var indicated, linked to the given function with the use of an HTML `<a>` tag.
+
+**Return Type:** HTML ARRAY
+
+### FIND_RECORDS_BY_TYPE Resolver
+
+**Syntax:**
+```
+find_records_by_type(module_type)
+```
+
+Returns an array of UUIDs for all records in the database that match the specified module type. This is useful for gathering all instances of a particular module for processing with other resolvers like sort, match, or foreach.
+
+**Example:**
+```
+tmp all_tasks[] = find_records_by_type(printer_cleaning)
+tmp sorted_tasks[] = sort(all_tasks,creation_date,DESCENDING)
+foreach sorted_tasks#preview
+```
+
+**Return Type:** UUID ARRAY
