@@ -311,7 +311,7 @@ class ExecutionEngine {
             // Multi-line Surround Handler: < ... | (starts multi-line, continues until line ending with >)
             else if (line.startsWith('<') && line.endsWith('|')) {
                 html.append('<div class="incontact-multiline-container">')
-
+                
                 // Process the first line
                 def content = line.substring(1, line.length() - 1)
                 html.append('<div class="incontact-row">')
@@ -322,7 +322,7 @@ class ExecutionEngine {
                     html.append('</div>')
                 }
                 html.append('</div>')
-
+                
                 // Continue processing lines until we find one ending with >
                 i++
                 while (i < function.script.size()) {
@@ -352,7 +352,7 @@ class ExecutionEngine {
                     }
                     i++
                 }
-
+                
                 html.append('</div>')
             }
 
@@ -372,7 +372,7 @@ class ExecutionEngine {
             // Multi-line Block Surround Handler: [ ... | (starts multi-line, continues until line ending with ])
             else if (line.startsWith('[') && line.endsWith('|')) {
                 html.append('<div class="incontact-multiline-container">')
-
+                
                 // Process the first line
                 def content = line.substring(1, line.length() - 1)
                 html.append('<div class="incontact-block-row">')
@@ -383,7 +383,7 @@ class ExecutionEngine {
                     html.append('</div>')
                 }
                 html.append('</div>')
-
+                
                 // Continue processing lines until we find one ending with ]
                 i++
                 while (i < function.script.size()) {
@@ -413,7 +413,7 @@ class ExecutionEngine {
                     }
                     i++
                 }
-
+                
                 html.append('</div>')
             }
 

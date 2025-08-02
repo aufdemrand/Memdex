@@ -231,12 +231,12 @@ All rows within a multi-line surround are wrapped in a parent HTML element with 
 #render:
     << focus(address) >>
     < 'City:' | focus(city) | 'State:' | focus(state) >
-
+    
     // Multi-line surround example with < ... >
     < 'Contact Information:' | 'Details' |
     'Phone:' | focus(phone) |
     'Email:' | focus(email) >
-
+    
     // Multi-line block surround example with [ ... ]
     [ 'Extended Notes:' |
     multi_focus(notes) |

@@ -50,16 +50,15 @@ var chores_list[] = 'Take out the trash|Empty the dishwasher|Feed the pets|Clean
     var statuses[] = 'Pending|Complete'
 
 	< '<h3>Edit Chore Task</h3>' >
-	< '<em>Chore:</em>' |
-	  select(chores_list, task_name) >
-	< '<em>Assign To:</em>' >
-	< select(household_members, assigned_to) >
-	< '<em>Status:</em>' >
-	< select(statuses, status) >
+	[ '<em>Chore:</em>' |
+	  select(chores_list, task_name) ]
+	[ '<em>Assign To:</em>' |
+	  select(household_members, assigned_to) ]
+	[ '<em>Status:</em>' |
+	  select(statuses, status) ]
 	[ '<em>Completion Notes:</em>' |
 	  multi_focus(completion_notes) ]
-	< button('Delete Task', #delete) >
-	< back_button('Done') >
+	< back_button('Done') |<>| button('Delete Task', #delete) >
 
 #delete:
 	remove &uuid
