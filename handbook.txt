@@ -214,8 +214,15 @@ end case
 | `< value \| value \| ... >` | Outputs cells as HTML |
 | `<< value \| value \| ... >>` | Outputs cells as a HTML header with special styling |
 | `[ value \| value \| ... ]` | Outputs cells as HTML in block format |
+| `< value \| value \| ... \|` (multi-line) | Starts a multi-line surround that continues until a line ending with `>` |
 
 Surround handlers format information for the user as multiple cells. Cell divisions are identified with the pipe character (`|`), and cells themselves should consist of a string value or Resolver that outputs a string or HTML value.
+
+#### Multi-line Surrounds
+
+Multi-line surrounds allow you to create a styled container that spans multiple lines. When a surround line starts with `<` and ends with `|` (instead of `>`), it begins a multi-line surround block. Each subsequent line is treated as a continuation of the surround until a line ending with `>` is encountered.
+
+All rows within a multi-line surround are wrapped in a parent HTML element with the CSS class `incontact-multiline-container`, allowing it to be styled differently from single-line surrounds while maintaining the individual row structure.
 
 **Examples:**
 ```
@@ -223,6 +230,20 @@ Surround handlers format information for the user as multiple cells. Cell divisi
 #render:
     << focus(address) >>
     < 'City:' | focus(city) | 'State:' | focus(state) >
+
+    // Multi-line surround example
+    < 'Contact Information:' | 'Details' |
+    'Phone:' | focus(phone) |
+    'Email:' | focus(email) >
+```
+
+**Multi-line surround in the chore task example:**
+```
+@chore_task : Chore Task (Household)
+#edit:
+    < '<em>Chore:</em>' | select(chores_list, task_name) |
+    '<em>Assign To:</em>' | select(household_members, assigned_to) |
+    '<em>Status:</em>' | select(statuses, status) >
 ```
 
 The `<< >>` (double angle bracket) surround creates header-styled cells with the CSS class `incontact-header-cell`, which can be styled differently from regular cells for visual emphasis.

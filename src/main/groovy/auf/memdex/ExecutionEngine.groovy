@@ -97,9 +97,13 @@ class ExecutionEngine {
                                             html.append('</div>')
                                         }
                                         html.append('</div>')
-                                    } else if (blockLine.startsWith('<') && blockLine.endsWith('>')) {
-                                        html.append('<div class="incontact-row">')
+                                    } else if (blockLine.startsWith('<') && blockLine.endsWith('|')) {
+                                        // Multi-line Surround Handler within case block
+                                        html.append('<div class="incontact-multiline-container">')
+
+                                        // Process the first line
                                         def content = blockLine.substring(1, blockLine.length() - 1)
+                                        html.append('<div class="incontact-row">')
                                         content.split('\\|').each { cell ->
                                             html.append('<div class="incontact-cell">')
                                             def cellValue = resolveValue(cell.trim(), module, recordVars, context)
@@ -107,11 +111,48 @@ class ExecutionEngine {
                                             html.append('</div>')
                                         }
                                         html.append('</div>')
-                                    } else if (blockLine.startsWith('[') && blockLine.endsWith(']')) {
-                                        html.append('<div class="incontact-block-row">')
-                                        def content = blockLine.substring(1, line.length() - 1)
+
+                                        // Continue processing lines until we find one ending with >
+                                        i++
+                                        while (i < function.script.size()) {
+                                            def nextLine = function.script[i]
+                                            if (nextLine.trim().startsWith('case ') || nextLine.trim() == 'end case') {
+                                                // Don't consume case/endcase lines, back up one
+                                                i--
+                                                break
+                                            }
+                                            if (nextLine.endsWith('>')) {
+                                                // This is the final line of the multi-line surround
+                                                def finalContent = nextLine.substring(0, nextLine.length() - 1)
+                                                html.append('<div class="incontact-row">')
+                                                finalContent.split('\\|').each { cell ->
+                                                    html.append('<div class="incontact-cell">')
+                                                    def cellValue = resolveValue(cell.trim(), module, recordVars, context)
+                                                    html.append(cellValue?.toString() ?: '')
+                                                    html.append('</div>')
+                                                }
+                                                html.append('</div>')
+                                                break
+                                            } else {
+                                                // This is a continuation line
+                                                html.append('<div class="incontact-row">')
+                                                nextLine.split('\\|').each { cell ->
+                                                    html.append('<div class="incontact-cell">')
+                                                    def cellValue = resolveValue(cell.trim(), module, recordVars, context)
+                                                    html.append(cellValue?.toString() ?: '')
+                                                    html.append('</div>')
+                                                }
+                                                html.append('</div>')
+                                            }
+                                            i++
+                                        }
+
+                                        html.append('</div>')
+                                    } else if (blockLine.startsWith('<') && blockLine.endsWith('>')) {
+                                        html.append('<div class="incontact-row">')
+                                        def content = blockLine.substring(1, blockLine.length() - 1)
                                         content.split('\\|').each { cell ->
-                                            html.append('<div class="incontact-block-cell">')
+                                            html.append('<div class="incontact-cell">')
                                             def cellValue = resolveValue(cell.trim(), module, recordVars, context)
                                             html.append(cellValue?.toString() ?: '')
                                             html.append('</div>')
@@ -206,10 +247,13 @@ class ExecutionEngine {
                 html.append('</div>')
             }
 
-            // Surround Handler: < ... >
-            else if (line.startsWith('<') && line.endsWith('>')) {
-                html.append('<div class="incontact-row">')
+            // Multi-line Surround Handler: < ... | (starts multi-line, continues until line ending with >)
+            else if (line.startsWith('<') && line.endsWith('|')) {
+                html.append('<div class="incontact-multiline-container">')
+
+                // Process the first line
                 def content = line.substring(1, line.length() - 1)
+                html.append('<div class="incontact-row">')
                 content.split('\\|').each { cell ->
                     html.append('<div class="incontact-cell">')
                     def cellValue = resolveValue(cell.trim(), module, recordVars, context)
@@ -217,14 +261,46 @@ class ExecutionEngine {
                     html.append('</div>')
                 }
                 html.append('</div>')
+
+                // Continue processing lines until we find one ending with >
+                i++
+                while (i < function.script.size()) {
+                    def nextLine = function.script[i]
+                    if (nextLine.endsWith('>')) {
+                        // This is the final line of the multi-line surround
+                        def finalContent = nextLine.substring(0, nextLine.length() - 1)
+                        html.append('<div class="incontact-row">')
+                        finalContent.split('\\|').each { cell ->
+                            html.append('<div class="incontact-cell">')
+                            def cellValue = resolveValue(cell.trim(), module, recordVars, context)
+                            html.append(cellValue?.toString() ?: '')
+                            html.append('</div>')
+                        }
+                        html.append('</div>')
+                        break
+                    } else {
+                        // This is a continuation line
+                        html.append('<div class="incontact-row">')
+                        nextLine.split('\\|').each { cell ->
+                            html.append('<div class="incontact-cell">')
+                            def cellValue = resolveValue(cell.trim(), module, recordVars, context)
+                            html.append(cellValue?.toString() ?: '')
+                            html.append('</div>')
+                        }
+                        html.append('</div>')
+                    }
+                    i++
+                }
+
+                html.append('</div>')
             }
 
-            // Block Surround Handler: [ ... ]
-            else if (line.startsWith('[') && line.endsWith(']')) {
-                html.append('<div class="incontact-block-row">')
+            // Surround Handler: < ... >
+            else if (line.startsWith('<') && line.endsWith('>')) {
+                html.append('<div class="incontact-row">')
                 def content = line.substring(1, line.length() - 1)
                 content.split('\\|').each { cell ->
-                    html.append('<div class="incontact-block-cell">')
+                    html.append('<div class="incontact-cell">')
                     def cellValue = resolveValue(cell.trim(), module, recordVars, context)
                     html.append(cellValue?.toString() ?: '')
                     html.append('</div>')
@@ -544,4 +620,3 @@ class ExecutionEngine {
         return value // Return as is if no resolver matches
     }
 }
-
