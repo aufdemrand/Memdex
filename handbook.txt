@@ -1,6 +1,6 @@
 # MEMDEX REFERENCE HANDBOOK
 
-Memdex is a custom CMS system that offers a web-based front-end with a programmable back-end to perfectly describe your operations. It was created by Jeremy Schroeder and can be purchased for $100.00 by e-mailing him.
+Memdex is a personal database system that offers a web-based front-end with a programmable back-end to perfectly describe your data. It was created by Jeremy Schroeder and can be purchased for $20.00 by e-mailing him.
 
 ## MODULES
 
@@ -148,14 +148,14 @@ Arrays have multiple pieces of information tied to a single variable. To deal wi
 
 ### Syntax Reference
 
-| Syntax | Description |
-|--------|-------------|
-| `var var_name` | Define empty var |
-| `var array_var[]` | Define empty array var |
-| `var var_name = value` | Sets a var to a specific value |
-| `var array_var[] = 'val\|val2'` | Sets an arrayed var with values |
-| `var var_name[] -> value` | Add a specific string to an array var |
-| `var var_name[] <- value` | Remove a specific string from an array var |
+| Syntax                          | Description                                |
+|---------------------------------|--------------------------------------------|
+| `var var_name`                  | Define empty var                           |
+| `var array_var[]`               | Define empty array var                     |
+| `var var_name = value`          | Sets a var to a specific value             |
+| `var array_var[] = 'val\|val2'` | Sets an arrayed var with values            |
+| `var var_name[] -> value`       | Add a specific string to an array var      |
+| `var var_name[] <- value`       | Remove a specific string from an array var |
 
 **Values can be given as:**
 - `&querystring` - any valid querystring that has been passed along
@@ -209,12 +209,12 @@ end case
 
 ### SURROUND Handlers
 
-| Syntax | Description |
-|--------|-------------|
-| `< value \| value \| ... >` | Outputs cells as HTML |
-| `<< value \| value \| ... >>` | Outputs cells as a HTML header with special styling |
-| `[ value \| value \| ... ]` | Outputs cells as HTML in block format |
-| `< value \| value \| ... \|` (multi-line) | Starts a multi-line surround that continues until a line ending with `>` |
+| Syntax                                    | Description                                                                    |
+|-------------------------------------------|--------------------------------------------------------------------------------|
+| `< value \| value \| ... >`               | Outputs cells as HTML                                                          |
+| `<< value \| value \| ... >>`             | Outputs cells as a HTML header with special styling                            |
+| `[ value \| value \| ... ]`               | Outputs cells as HTML in block format                                          |
+| `< value \| value \| ... \|` (multi-line) | Starts a multi-line surround that continues until a line ending with `>`       |
 | `[ value \| value \| ... \|` (multi-line) | Starts a multi-line block surround that continues until a line ending with `]` |
 
 Surround handlers format information for the user as multiple cells. Cell divisions are identified with the pipe character (`|`), and cells themselves should consist of a string value or Resolver that outputs a string or HTML value.

@@ -5,18 +5,16 @@ body {font-family: 'Mozilla Text', sans-serif;background-color: #f4efef;color: #
 /* Home icon styling */
 .home-icon-container {
     position: fixed;
-    top: 1rem;
-    /* margin-right: 0px; */
     z-index: 1000;
     background: rgb(48 48 48 / 90%);
-    border-radius: 6px;
     padding-inline: 2rem;
-    border: 2px solid #404040;
     margin-left: auto;
-    left: 1rem;
     opacity: .75;
-    height: 3rem;
+    height: 4rem;
     display: flex;
+    justify-content: space-between;
+    box-sizing: border-box;
+    width: 100%;
 }
 
 .incontact-block-cell:has(>em) {
@@ -115,7 +113,7 @@ em {font-style: italic;color: #555;}
 }
 
 .foreach-item {
-    border: 6px solid #dfdfdf;
+    border: 3px solid #dfdfdf;
     /* padding: 12px; */
     margin-bottom: 1em;
     border-radius: 6px;
@@ -181,8 +179,8 @@ html {
     flex: 6;
     margin-left: auto;
     margin-right: auto;
-    min-width: -webkit-fill-available;
 }
+
 .incontact-cell:has(.incontact-space) {
     margin-left: auto;
     margin-right: auto;
@@ -199,7 +197,7 @@ html {
     padding: 0px;
     border-radius: 32px;
     height: 1.5em;
-    padding: 3px;
+    /* padding: 3px; */
     display: flex;
     zoom: 2;
     cursor: pointer;
@@ -212,13 +210,75 @@ html {
 
     &:hover {
         background-color: transparent;
-        /* scale: 1.1; */
-        /* padding: 0; */
-        outline: 2px solid #007bff;
+        scale: 1.1;
+        /* padding: 2px; */
+        /* outline: 1.5px solid #dbdbdb; */
     }
     &:active {
         border: 0;
         border-radius: 50px;
         background-color: #eeeeee;
     }
+}
+
+/* JSON Editor Styling */
+.json-editor-container {
+    max-width: 100%;
+}
+
+.json-editor-container textarea {
+    width: 100%;
+    min-height: 400px;
+    font-family: 'Courier New', Monaco, monospace;
+    font-size: 12px;
+    line-height: 1.4;
+    padding: 15px;
+    border: 2px solid #ddd;
+    border-radius: 5px;
+    background-color: #f8f8f8;
+    resize: vertical;
+    box-sizing: border-box;
+}
+
+.json-editor-container textarea:focus {
+    outline: none;
+    border-color: #7200a3;
+    background-color: #fff;
+}
+
+.json-editor-container button {
+    margin-right: 10px;
+    margin-bottom: 10px;
+}
+
+.json-editor-container h2 {
+    color: #7200a3;
+    margin-bottom: 20px;
+}
+
+.json-editor-container p {
+    margin: 5px 0;
+    font-weight: 500;
+}
+
+#validationResult {
+    /* padding: 10px; */
+    border-radius: 5px;
+    font-weight: bold;
+}
+
+#validationResult div[style*="color: green"] {
+    background-color: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724 !important;
+}
+
+#validationResult div[style*="color: red"] {
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24 !important;
+}
+
+#validationResult > div {
+    padding: 1em;
 }

@@ -76,14 +76,14 @@ class MainServlet extends HttpServlet {
             } else {
                 modules.each { type, module ->
                     if (module.functions['#home']) {
-                        welcomeHtml.append('<div class="incontact-row">')
-                        welcomeHtml.append('<div class="incontact-cell"><strong>')
+                        welcomeHtml.append('<div class="incontact-block-row">')
+                        welcomeHtml.append('<div class="incontact-block-cell"><strong>')
                         welcomeHtml.append(module.name ?: type)
-                        welcomeHtml.append('</strong></div>')
+                        welcomeHtml.append('</strong></div><div class="incontact-cell"><div class="incontact-spacer"></div></div>')
                         welcomeHtml.append('<div class="incontact-cell">')
                         welcomeHtml.append('<a href="/module/')
                         welcomeHtml.append(type)
-                        welcomeHtml.append('/home" class="button">Open</a>')
+                        welcomeHtml.append('/home" class="button emoji-btn">📒</a>')
                         welcomeHtml.append('</div>')
                         welcomeHtml.append('</div>')
                     }
@@ -91,6 +91,77 @@ class MainServlet extends HttpServlet {
             }
 
             resp.writer.println(createPage("Memdex", welcomeHtml.toString()))
+            return
+        }
+
+        // Handle JSON editor requests: /json/uuid - MOVED BEFORE module route check
+        if (parts.size() == 2 && parts[0] == 'json') {
+            def uuid = parts[1]
+            def record = dbService.getRecord(uuid)
+
+            if (!record) {
+                resp.writer.println(createPage("Error", "<h3>Record not found</h3>"))
+                return
+            }
+
+            def jsonContent = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(record))
+            // HTML escape the JSON content
+            def escapedJsonContent = jsonContent.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
+            def html = """
+                <div class="json-editor-container">
+                    <h2>Edit Record</h2>
+                    <p><strong>UUID:</strong> ${uuid}</p>
+                    <p><strong>Module Type:</strong> ${record.module_type}</p>
+                    <br>
+                    <form id="jsonForm" method="post" action="/json/${uuid}">
+                        <textarea id="jsonContent" name="jsonContent" rows="20" cols="80">${escapedJsonContent}</textarea>
+                        <br><br>
+                        <div class="incontact-block-row">
+                            <div class="incontact-block-cell">
+                                <button type="button" class=" emoji-btn" onclick="history.back()">⬅️</button>
+                            </div>
+
+                                <div class="incontact-space"></div>
+
+                            <div class="incontact-block-cell">
+                                <button type="button" class=" emoji-btn" onclick="validateJson()">✅</button>
+                            </div>
+                            <div class="incontact-block-cell">
+                                <button type="submit" class=" emoji-btn">💾</button>
+                            </div>
+                        </div>
+                    </form>
+                    
+                    <div id="validationResult" style="margin-top: 10px;"></div>
+                </div>
+                
+                <script>
+                function validateJson() {
+                    const textarea = document.getElementById('jsonContent');
+                    const resultDiv = document.getElementById('validationResult');
+                    
+                    try {
+                        JSON.parse(textarea.value);
+                        resultDiv.innerHTML = '<div style="color: green; font-weight: bold;">✅ Valid JSON</div>';
+                    } catch (e) {
+                        resultDiv.innerHTML = '<div style="color: red; font-weight: bold;">❌ Invalid JSON: ' + e.message + '</div>';
+                    }
+                }
+                
+                document.getElementById('jsonForm').addEventListener('submit', function(e) {
+                    const textarea = document.getElementById('jsonContent');
+                    try {
+                        JSON.parse(textarea.value);
+                    } catch (err) {
+                        e.preventDefault();
+                        alert('Invalid JSON! Please fix the JSON before saving.');
+                        return false;
+                    }
+                });
+                </script>
+            """
+
+            resp.writer.println(createPage("JSON Editor", html))
             return
         }
 
@@ -255,6 +326,10 @@ class MainServlet extends HttpServlet {
         context.querystring = querystring
 
         def html = engine.execute(module, functionName, context)
+
+        // Remove the old JSON edit button code since it's now in the header
+        // No longer adding JSON button to content area
+
         // Create page with debug information
         def record = context.record ?: [data:[:]]
         resp.writer.println(createPageWithDebug(module.name, html, module, record.data, context))
@@ -287,7 +362,151 @@ class MainServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) {
-        // Support both JSON and form-encoded requests
+        def pathInfo = req.getPathInfo()
+        def parts = pathInfo ? pathInfo.split('/').findAll { it } : []
+
+        // Handle JSON editor save requests: POST /json/uuid
+        if (parts.size() == 2 && parts[0] == 'json') {
+            def uuid = parts[1]
+            def jsonContent = req.getParameter("jsonContent")
+
+            if (!jsonContent) {
+                resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing JSON content")
+                return
+            }
+
+            try {
+                // Validate JSON
+                def parsedJson = new groovy.json.JsonSlurper().parseText(jsonContent)
+
+                // Ensure the JSON has required fields
+                if (!parsedJson.uuid || !parsedJson.module_type) {
+                    throw new IllegalArgumentException("JSON must contain 'uuid' and 'module_type' fields")
+                }
+
+                if (parsedJson.uuid != uuid) {
+                    throw new IllegalArgumentException("UUID in JSON does not match URL parameter")
+                }
+
+                // Save the JSON directly to the database file
+                def dbFile = new File("database/${uuid}.json")
+                dbFile.text = groovy.json.JsonOutput.prettyPrint(jsonContent)
+
+                // Stay on the JSON editor page with a success message
+                def escapedJsonContent = jsonContent.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
+                def successHtml = """
+                    <div class="json-editor-container">
+                        <h2>Edit Record</h2>
+                        <div style="color: green; font-weight: bold; margin: 10px 0; padding: 10px; background-color: #d4edda; border: 1px solid #c3e6cb; border-radius: 5px;">
+                            &#x2705; JSON saved successfully!
+                        </div>
+                        <p><strong>UUID:</strong> ${uuid}</p>
+                        <p><strong>Module Type:</strong> ${parsedJson.module_type}</p>
+                        <br>
+                        <form id="jsonForm" method="post" action="/json/${uuid}">
+                            <textarea id="jsonContent" name="jsonContent" rows="20" cols="80">${escapedJsonContent}</textarea>
+                            <br><br>
+                            <div class="incontact-block-row">
+                                <div class="incontact-block-cell">
+                                    <button type="button" class="emoji-btn" onclick="history.back()">&#x2b05;&#xfe0f;</button>
+                                </div>
+
+                                    <div class="incontact-space"></div>
+
+                                <div class="incontact-block-cell">
+                                    <button type="button" class="emoji-btn" onclick="validateJson()">&#x2705;</button>
+                                </div>
+                                <div class="incontact-block-cell">
+                                    <button type="submit" class="emoji-btn">&#x1f4be;</button>
+                                </div>
+                            </div>
+                        </form>
+                        
+                        <div id="validationResult" style="margin-top: 10px;"></div>
+                    </div>
+                    
+                    <script>
+                    function validateJson() {
+                        const textarea = document.getElementById('jsonContent');
+                        const resultDiv = document.getElementById('validationResult');
+                        
+                        try {
+                            JSON.parse(textarea.value);
+                            resultDiv.innerHTML = '<div style="color: green; font-weight: bold;">&#x2705; Valid JSON</div>';
+                        } catch (e) {
+                            resultDiv.innerHTML = '<div style="color: red; font-weight: bold;">&#x274c; Invalid JSON: ' + e.message + '</div>';
+                        }
+                    }
+                    
+                    document.getElementById('jsonForm').addEventListener('submit', function(e) {
+                        const textarea = document.getElementById('jsonContent');
+                        try {
+                            JSON.parse(textarea.value);
+                        } catch (err) {
+                            e.preventDefault();
+                            alert('Invalid JSON! Please fix the JSON before saving.');
+                            return false;
+                        }
+                    });
+                    </script>
+                """
+
+                resp.writer.println(createPage("JSON Editor", successHtml))
+                return
+
+            } catch (Exception e) {
+                // HTML escape the JSON content for error display
+                def escapedJsonContentError = jsonContent.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
+                def errorHtml = """
+                    <div class="json-editor-container">
+                        <h2>JSON Save Error</h2>
+                        <div style="color: red; font-weight: bold; margin: 10px 0;">
+                            ❌ Error: ${e.message}
+                        </div>
+                        
+                        <form id="jsonForm" method="post" action="/json/${uuid}">
+                            <textarea id="jsonContent" name="jsonContent" rows="20" cols="80">${escapedJsonContentError}</textarea>
+                            <br><br>
+                            <button type="submit" class="button">💾 Save JSON</button>
+                            <button type="button" class="button" onclick="validateJson()">✅ Validate JSON</button>
+                            <button type="button" class="button" onclick="history.back()">⬅️ Go Back</button>
+                        </form>
+                        
+                        <div id="validationResult" style="margin-top: 10px;"></div>
+                    </div>
+                    
+                    <script>
+                    function validateJson() {
+                        const textarea = document.getElementById('jsonContent');
+                        const resultDiv = document.getElementById('validationResult');
+                        
+                        try {
+                            JSON.parse(textarea.value);
+                            resultDiv.innerHTML = '<div style="color: green; font-weight: bold;">✅ Valid JSON</div>';
+                        } catch (e) {
+                            resultDiv.innerHTML = '<div style="color: red; font-weight: bold;">❌ Invalid JSON: ' + e.message + '</div>';
+                        }
+                    }
+                    
+                    document.getElementById('jsonForm').addEventListener('submit', function(e) {
+                        const textarea = document.getElementById('jsonContent');
+                        try {
+                            JSON.parse(textarea.value);
+                        } catch (err) {
+                            e.preventDefault();
+                            alert('Invalid JSON! Please fix the JSON before saving.');
+                            return false;
+                        }
+                    });
+                    </script>
+                """
+
+                resp.writer.println(createPage("JSON Editor - Error", errorHtml))
+                return
+            }
+        }
+
+        // Support both JSON and form-encoded requests for regular var updates
         String uuid = null
         String varName = null
         String value = null
@@ -348,6 +567,14 @@ class MainServlet extends HttpServlet {
             """
         }
 
+        // Check if we should show the JSON edit button (for pages with records)
+        def showJsonButton = context?.record?.uuid != null
+        def jsonButton = showJsonButton ? """
+                <a href="/json/${context.record.uuid}" class="home-icon" title="Edit Raw JSON">
+                    <img src="/static/wrench-icon.svg" alt="Edit JSON" width="24" height="24">
+                </a>
+        """ : ""
+
         return """
         <!DOCTYPE html>
         <html>
@@ -360,6 +587,7 @@ class MainServlet extends HttpServlet {
                 <a href="/" class="home-icon">
                     <img src="/static/home-icon.svg" alt="Home" width="24" height="24">
                 </a>
+                ${jsonButton}
             </div>
             <div class="container">
                 <h1>${title}</h1>

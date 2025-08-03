@@ -20,12 +20,9 @@ var chores_list[] = 'Take out the trash|Empty the dishwasher|Feed the pets|Clean
 
 	// The select() resolver creates a dropdown menu. The user's choice
 	// is stored in the corresponding record variable.
-	< '<em>Chore:</em>' >
-	< select(chores_list, task_name) >
-	< '<em>Assign To:</em>' >
-	< select(household_members, assigned_to) >
-
-	< back_button('Done') >
+	[ '<em>Chore:</em>' | select(chores_list, task_name) ]
+    [ '<em>Assign To:</em>' | select(household_members, assigned_to) ]
+	<< back_button(↩) >>
 
 // #preview is a summary view of the task, used in the main list on the #home page. [cite: 31, 32]
 #preview:
@@ -35,12 +32,12 @@ var chores_list[] = 'Take out the trash|Empty the dishwasher|Feed the pets|Clean
 	// The CASE handler checks the value of the 'status' variable. [cite: 78]
 	case status 'Pending'
 		// If the status is 'Pending', a button to complete the task is shown.
-		< button('Mark as Complete', #mark_complete) | * | button('Edit Task', #edit) >
+		< button('Mark as Complete', #mark_complete) | * | button(🔍, #edit) >
 	end case
 
 	case status 'Complete'
 		// If the status is 'Complete', a status message is shown instead.
-		< '<em>Status:</em> Complete' | * | button('Edit Task', #edit) >
+		< '<em>Status:</em> Complete' | * | button(🔍, #edit) >
 	end case
 
 #edit:
@@ -52,12 +49,12 @@ var chores_list[] = 'Take out the trash|Empty the dishwasher|Feed the pets|Clean
 	  '<em>Status:</em>' | select(statuses, status) ]
 	[ '<em>Completion Notes:</em>' |
 	  multi_focus(completion_notes) ]
-	< back_button(✍) | * | button(🗑, #delete) >
+	< back_button(↩) | * | button(🗑, #delete) >
 
 #delete:
 	remove &uuid
 	< '<h3>Task deleted.</h3>' >
-	< button('Back to Chore Schedule', chore_schedule#home) >
+	< button(🔙, chore_schedule#home) >
 
 // This function is called when the 'Mark as Complete' button is pressed.
 #mark_complete:
@@ -66,4 +63,4 @@ var chores_list[] = 'Take out the trash|Empty the dishwasher|Feed the pets|Clean
 
 	< '<h3>Task Complete!</h3>' >
 	[ '<em>Notes:</em>' | multi_focus(completion_notes) ]
-	< button('Back to Chore Schedule', chore_schedule#home) >
+	< button(🔙, chore_schedule#home) >

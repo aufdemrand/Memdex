@@ -9,12 +9,11 @@ var tasks[]
 // It provides a button to assign new tasks and then lists all existing tasks.
 #home:
 	< '<h2>Weekly Chore Distribution</h2>' >
-	< 'Use this button to assign a new chore to a household member. The task will then appear in the list below.' >
 	// This button creates a new 'chore_task' record, stores its ID in our 'tasks' array,
-	// and then redirects the user to the #setup function for that new task. [cite: 112, 113]
-	< construction_button('Assign a New Chore', #setup, chore_task, tasks) >
+	// and then redirects the user to the #setup function for that new task.
+	< construction_button(➕, #setup, chore_task, tasks) | 'Use this button to assign a new chore to a household member. The task will then appear in the list below.' >
 
-	< '<h2>This Week\'s Chore List</h2>' >
+	< '<h3>This Week\'s Chore List</h3>' >
 	// The foreach handler iterates through every task ID stored in the 'tasks' array
 	// and renders the #preview function for each one. [cite: 72, 73]
 	foreach tasks#preview
