@@ -59,35 +59,28 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Handle focusable element clicks and updates
     document.addEventListener('click', function(e) {
-        if (e.target.classList.contains('focusable')) {
+        if (e.target.classList.contains('focusable') && e.target.contentEditable !== 'true') {
             const varName = e.target.getAttribute('data-varname');
             const uuid = e.target.getAttribute('data-uuid');
             const currentValue = e.target.textContent;
 
-            // Create an input field
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.value = currentValue;
-            input.className = 'focusable-input';
+            // Make the element editable
+            e.target.contentEditable = 'true';
+            e.target.focus();
 
-            // Replace the span with the input
-            e.target.parentNode.replaceChild(input, e.target);
-            input.focus();
-            input.select();
+            // Select all text for easy editing
+            const range = document.createRange();
+            range.selectNodeContents(e.target);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
 
-            // Handle when input loses focus or Enter is pressed
+            // Handle when element loses focus or Enter is pressed
             function handleUpdate() {
-                const newValue = input.value;
+                const newValue = e.target.textContent.trim();
 
-                // Create new span with updated value
-                const newSpan = document.createElement('span');
-                newSpan.className = 'focusable';
-                newSpan.setAttribute('data-varname', varName);
-                newSpan.setAttribute('data-uuid', uuid);
-                newSpan.textContent = newValue;
-
-                // Replace input with updated span
-                input.parentNode.replaceChild(newSpan, input);
+                // Make the element non-editable again
+                e.target.contentEditable = 'false';
 
                 // Send update to server if value changed
                 if (newValue !== currentValue && varName && uuid) {
@@ -114,12 +107,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
 
-            input.addEventListener('blur', handleUpdate);
-            input.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    input.blur();
+            e.target.addEventListener('blur', handleUpdate, { once: true });
+            e.target.addEventListener('keypress', function(event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    e.target.blur();
                 }
-            });
+            }, { once: true });
         }
     });
 });
