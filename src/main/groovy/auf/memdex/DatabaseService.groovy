@@ -46,6 +46,10 @@ class DatabaseService {
     void saveRecord(Map<String, Object> record) {
         def uuid = record.uuid
         if (!uuid) throw new IllegalArgumentException("Record must have a UUID.")
+
+        // Automatically set updated_date when saving
+        record.updated_at = new Date().toInstant().toString()
+
         def recordFile = new File(dbRoot, "${uuid}.json")
         recordFile.write(new JsonBuilder(record).toPrettyString())
     }

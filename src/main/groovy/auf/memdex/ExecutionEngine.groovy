@@ -755,6 +755,41 @@ class ExecutionEngine {
             return uuids
         }
 
+        // System variables for date fields
+        if (value == 'creation_date' && context.record) {
+            def createdAt = context.record.created_at
+            if (createdAt) {
+                // Format the ISO date string to a more readable format
+                try {
+                    def instant = java.time.Instant.parse(createdAt.toString())
+                    def formatter = java.time.format.DateTimeFormatter.ofPattern("MMM d, yyyy 'at' h:mm a")
+                            .withZone(java.time.ZoneId.systemDefault())
+                    def result = formatter.format(instant)
+                    return shouldBold ? "<strong>${result}</strong>" : result
+                } catch (Exception e) {
+                    def result = createdAt.toString()
+                    return shouldBold ? "<strong>${result}</strong>" : result
+                }
+            }
+        }
+
+        if (value == 'updated_date' && context.record) {
+            def updatedAt = context.record.updated_at
+            if (updatedAt) {
+                // Format the ISO date string to a more readable format
+                try {
+                    def instant = java.time.Instant.parse(updatedAt.toString())
+                    def formatter = java.time.format.DateTimeFormatter.ofPattern("MMM d, yyyy 'at' h:mm a")
+                            .withZone(java.time.ZoneId.systemDefault())
+                    def result = formatter.format(instant)
+                    return shouldBold ? "<strong>${result}</strong>" : result
+                } catch (Exception e) {
+                    def result = updatedAt.toString()
+                    return shouldBold ? "<strong>${result}</strong>" : result
+                }
+            }
+        }
+
         // A variable from the record
         if (recordVars.containsKey(value)) {
             def recordValue = recordVars[value]
@@ -777,3 +812,4 @@ class ExecutionEngine {
         return shouldBold ? "<strong>${result?.toString() ?: ''}</strong>" : result
     }
 }
+

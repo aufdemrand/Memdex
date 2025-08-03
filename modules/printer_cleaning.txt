@@ -27,5 +27,5 @@ var results[] = 'Complete - Normal|Complete - Issues Found|Incomplete - Equipmen
  [ '<em>Findings/Notes:</em>' | multi_focus(findings) ]
 
 #preview:
- < creation_date | '-' | select(printers,printer) | '-' | focus(technician) >
+ [ creation_date | select(printers,printer) | focus(technician) ]
  < '<em>Result:</em>' | select(results,result) >
