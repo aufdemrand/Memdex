@@ -104,6 +104,25 @@ class MainServlet extends HttpServlet {
                 return
             }
 
+            // Check for success/error messages from querystring
+            def savedMessage = req.getParameter("saved")
+            def errorMessage = req.getParameter("error")
+            def statusMessage = ""
+
+            if (savedMessage == "true") {
+                statusMessage = """
+                    <div style="color: green; font-weight: bold; margin: 10px 0; padding: 1em; background-color: #d4edda; border: 0px solid #c3e6cb; border-radius: 10px;">
+                        ✅ JSON saved successfully!
+                    </div>
+                """
+            } else if (errorMessage) {
+                statusMessage = """
+                    <div style="color: red; font-weight: bold; margin: 10px 0; padding: 1em; background-color: #f8d7da; border: 0px solid #f5c6cb; border-radius: 10px;">
+                        ❌ Error: ${errorMessage}
+                    </div>
+                """
+            }
+
             def jsonContent = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(record))
             // HTML escape the JSON content
             def escapedJsonContent = jsonContent.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
@@ -118,7 +137,7 @@ class MainServlet extends HttpServlet {
                         <br><br>
                         <div class="incontact-block-row">
                             <div class="incontact-block-cell">
-                                <button type="button" class=" emoji-btn" onclick="history.back()">⬅️</button>
+                                <button type="button" class=" emoji-btn" onclick="history.back()">↩</button>
                             </div>
 
                                 <div class="incontact-space"></div>
@@ -133,9 +152,29 @@ class MainServlet extends HttpServlet {
                     </form>
                     
                     <div id="validationResult" style="margin-top: 10px;"></div>
+                    ${statusMessage}
                 </div>
                 
                 <script>
+                // Remove history entry if we have success/error parameters
+                document.addEventListener('DOMContentLoaded', function() {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    if (urlParams.has('saved') || urlParams.has('error')) {
+                        console.log('Removing history entry for', window.location.href);
+                        
+                        // Show the message for a moment, then remove the redirect from history
+                        setTimeout(function() {
+                            // Go back to remove the current entry, then replace with clean URL
+                            const cleanUrl = window.location.pathname.replace('/json/', '/module/') + '/home?uuid=' + window.location.pathname.split('/').pop();
+                            window.history.go(-1);
+                            // Wait a moment for the history navigation to complete
+                            setTimeout(function() {
+                                window.history.replaceState(null, '', cleanUrl);
+                            }, 50);
+                        }, 3500); // Show success message for 1.5 seconds
+                    }
+                });
+                
                 function validateJson() {
                     const textarea = document.getElementById('jsonContent');
                     const resultDiv = document.getElementById('validationResult');
@@ -392,116 +431,13 @@ class MainServlet extends HttpServlet {
                 def dbFile = new File("database/${uuid}.json")
                 dbFile.text = groovy.json.JsonOutput.prettyPrint(jsonContent)
 
-                // Stay on the JSON editor page with a success message
-                def escapedJsonContent = jsonContent.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
-                def successHtml = """
-                    <div class="json-editor-container">
-                        <h2>Edit Record</h2>
-                        <div style="color: green; font-weight: bold; margin: 10px 0; padding: 10px; background-color: #d4edda; border: 1px solid #c3e6cb; border-radius: 5px;">
-                            &#x2705; JSON saved successfully!
-                        </div>
-                        <p><strong>UUID:</strong> ${uuid}</p>
-                        <p><strong>Module Type:</strong> ${parsedJson.module_type}</p>
-                        <br>
-                        <form id="jsonForm" method="post" action="/json/${uuid}">
-                            <textarea id="jsonContent" name="jsonContent" rows="20" cols="80">${escapedJsonContent}</textarea>
-                            <br><br>
-                            <div class="incontact-block-row">
-                                <div class="incontact-block-cell">
-                                    <button type="button" class="emoji-btn" onclick="history.back()">&#x2b05;&#xfe0f;</button>
-                                </div>
-
-                                    <div class="incontact-space"></div>
-
-                                <div class="incontact-block-cell">
-                                    <button type="button" class="emoji-btn" onclick="validateJson()">&#x2705;</button>
-                                </div>
-                                <div class="incontact-block-cell">
-                                    <button type="submit" class="emoji-btn">&#x1f4be;</button>
-                                </div>
-                            </div>
-                        </form>
-                        
-                        <div id="validationResult" style="margin-top: 10px;"></div>
-                    </div>
-                    
-                    <script>
-                    function validateJson() {
-                        const textarea = document.getElementById('jsonContent');
-                        const resultDiv = document.getElementById('validationResult');
-                        
-                        try {
-                            JSON.parse(textarea.value);
-                            resultDiv.innerHTML = '<div style="color: green; font-weight: bold;">&#x2705; Valid JSON</div>';
-                        } catch (e) {
-                            resultDiv.innerHTML = '<div style="color: red; font-weight: bold;">&#x274c; Invalid JSON: ' + e.message + '</div>';
-                        }
-                    }
-                    
-                    document.getElementById('jsonForm').addEventListener('submit', function(e) {
-                        const textarea = document.getElementById('jsonContent');
-                        try {
-                            JSON.parse(textarea.value);
-                        } catch (err) {
-                            e.preventDefault();
-                            alert('Invalid JSON! Please fix the JSON before saving.');
-                            return false;
-                        }
-                    });
-                    </script>
-                """
-
-                resp.writer.println(createPage("JSON Editor", successHtml))
+                // Redirect back to the JSON editor with success message
+                resp.sendRedirect("/json/${uuid}?saved=true")
                 return
 
             } catch (Exception e) {
-                // HTML escape the JSON content for error display
-                def escapedJsonContentError = jsonContent.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
-                def errorHtml = """
-                    <div class="json-editor-container">
-                        <h2>JSON Save Error</h2>
-                        <div style="color: red; font-weight: bold; margin: 10px 0;">
-                            ❌ Error: ${e.message}
-                        </div>
-                        
-                        <form id="jsonForm" method="post" action="/json/${uuid}">
-                            <textarea id="jsonContent" name="jsonContent" rows="20" cols="80">${escapedJsonContentError}</textarea>
-                            <br><br>
-                            <button type="submit" class="button">💾 Save JSON</button>
-                            <button type="button" class="button" onclick="validateJson()">✅ Validate JSON</button>
-                            <button type="button" class="button" onclick="history.back()">⬅️ Go Back</button>
-                        </form>
-                        
-                        <div id="validationResult" style="margin-top: 10px;"></div>
-                    </div>
-                    
-                    <script>
-                    function validateJson() {
-                        const textarea = document.getElementById('jsonContent');
-                        const resultDiv = document.getElementById('validationResult');
-                        
-                        try {
-                            JSON.parse(textarea.value);
-                            resultDiv.innerHTML = '<div style="color: green; font-weight: bold;">✅ Valid JSON</div>';
-                        } catch (e) {
-                            resultDiv.innerHTML = '<div style="color: red; font-weight: bold;">❌ Invalid JSON: ' + e.message + '</div>';
-                        }
-                    }
-                    
-                    document.getElementById('jsonForm').addEventListener('submit', function(e) {
-                        const textarea = document.getElementById('jsonContent');
-                        try {
-                            JSON.parse(textarea.value);
-                        } catch (err) {
-                            e.preventDefault();
-                            alert('Invalid JSON! Please fix the JSON before saving.');
-                            return false;
-                        }
-                    });
-                    </script>
-                """
-
-                resp.writer.println(createPage("JSON Editor - Error", errorHtml))
+                // Redirect back to the JSON editor with error message
+                resp.sendRedirect("/json/${uuid}?error=${URLEncoder.encode(e.message, 'UTF-8')}")
                 return
             }
         }
